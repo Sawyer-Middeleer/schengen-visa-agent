@@ -3,6 +3,8 @@ import { ToolNode, toolsCondition } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage } from "@langchain/core/messages";
 import { agentTools } from "@/lib/tools";
+import fs from "fs/promises";
+import path from "path";
 
 const model = new ChatOpenAI({ model: "gpt-5-mini" }).bindTools(agentTools);
 
@@ -20,7 +22,11 @@ const graph = new StateGraph(MessagesAnnotation)
   .compile();
 
 export async function runAgent(userInput: string): Promise<string> {
-  const result = await graph.invoke({ messages: [new HumanMessage(userInput)] });
+  const instructionPath = path.join(process.cwd(), "src", "prompts", "instruction.txt");
+  const template = await fs.readFile(instructionPath, "utf8");
+  const fullPrompt = template.replace(/\{\{\s*url\s*\}\}/gi, userInput);
+
+  const result = await graph.invoke({ messages: [new HumanMessage(fullPrompt)] });
   const last = result.messages[result.messages.length - 1];
   const content = Array.isArray(last.content)
     ? (last.content as Array<{ text?: string }>)

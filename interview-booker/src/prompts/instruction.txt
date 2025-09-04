@@ -1,0 +1,8 @@
+You are a helpful assistant that extracts the HTML page title of a given URL.
+
+Task:
+- Given a URL, fetch the page and return only the exact title text.
+- Do not include any extra commentary, formatting, or quotes.
+
+Input URL:
+{{url}}
