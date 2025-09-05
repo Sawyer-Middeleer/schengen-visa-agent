@@ -4,34 +4,36 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 
 export default function Home() {
   const [url, setUrl] = useState("");
   const [output, setOutput] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<"idle" | "processing" | "success" | "failure">("idle");
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setOutput(null);
-    setStatus("processing");
+    
+    // Add https:// if not present
+    let processedUrl = url.trim();
+    if (!processedUrl.startsWith('http://') && !processedUrl.startsWith('https://')) {
+      processedUrl = `https://${processedUrl}`;
+    }
+    
     try {
       const res = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input: url }),
+        body: JSON.stringify({ input: processedUrl }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Request failed");
       setOutput(data?.output ?? "");
-      setStatus("success");
     } catch (err) {
       setError((err as Error).message);
-      setStatus("failure");
     } finally {
       setLoading(false);
     }
@@ -46,8 +48,8 @@ export default function Home() {
         <CardContent>
           <form onSubmit={onSubmit} className="flex flex-col gap-3">
             <Input
-              type="url"
-              placeholder="Enter a URL (e.g., https://example.com)"
+              type="text"
+              placeholder="Enter a URL (e.g., example.com)"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               required
